@@ -12,7 +12,7 @@ import qiniu.io
 qiniu.conf.ACCESS_KEY = ""
 qiniu.conf.SECRET_KEY = ""
 
-http = httplib2.Http()
+http = httplib2.Http(timeout=30)
 
 config = "list.json"
 def read_list():
@@ -50,7 +50,7 @@ def make_patch(new):
 			sys.stderr.write('error: %s ' % err)
 
 def get_qqwry(date, copywrite):
-	resp, content = http.request("http://update.cz88.net/ip/qqwry.rar")
+	resp, content = http.request("http://update.cz88.net/ip/qqwry.rar", headers={'cache-control':'no-cache', 'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.124 Safari/537.36'})
 	data = qqwry.decode(copywrite, content)
 	out = open("data/" + date + ".dat", "wb")
 	out.write(data)
@@ -58,17 +58,19 @@ def get_qqwry(date, copywrite):
 
 def check_update():
 	#下载元文件，查看最新版属性
-	resp, copywrite = http.request("http://update.cz88.net/ip/copywrite.rar")
+	print "request copywrite.rar"
+	resp, copywrite = http.request("http://update.cz88.net/ip/copywrite.rar", headers={'cache-control':'no-cache', 'User-Agent':'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.124 Safari/537.36'})
+	print "parse copywrite.rar"
 	date = qqwry.meta_parse(copywrite)
 	date = str(date)
 	print("check " + date)
 	#本地无此版本
 	if date not in read_list():
 		#下载最新版数据
-		print("being download " + date)
+		print("begin download " + date)
 		get_qqwry(date, copywrite)
 		#制作此版本补丁
-		print("being make_patch " + date)
+		print("begin make_patch " + date)
 		make_patch(date)
 		#保存列表
 		save_list(date)
